@@ -3,6 +3,10 @@ git-check
 
 Check git status and check if git remote repositories is updated.
 
+![sample01](https://raw.github.com/yonchu/used-mem/master/img/sample01.png)
+
+![sample02](https://raw.github.com/yonchu/used-mem/master/img/sample02.png)
+
 Usage
 -----------------------
 
