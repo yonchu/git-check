@@ -138,6 +138,7 @@ check_remote_in_dir() {
     local url
 
     local branch
+    local remote_name
     local remote_branch
 
     if [ ! -e .git ]; then
@@ -155,10 +156,11 @@ check_remote_in_dir() {
                     | grep "^ *$branch *pushes" | sed 's/.*pushes to \(.*\) (.*)/\1/' | tr -d ' ')
             else
                 status=$remote_name
+                remote_name=
             fi
         else
             status=$branch
-            branch=''
+            branch=
         fi
     fi
     if [ "$status" != "up to date" ]; then
@@ -166,7 +168,7 @@ check_remote_in_dir() {
     fi
     local branch_info=''
     if [ -n "$branch" ]; then
-        branch_info="($branch -> $remote_branch)"
+        branch_info="($branch -> $remote_name/$remote_branch)"
     fi
 
     local update_info="($status) [${dir%/}]$branch_info${url:+ URL: $url}"
