@@ -131,15 +131,15 @@ is_dir() {
 # $1 : The directory path.
 # $2 : Indent level.
 check_remote_in_dir() {
-    local dir=$1
+    local dir=${1%/}
     local indent_level=${2:-0}
 
     local status
-    local url
+    local url='?'
 
-    local branch
-    local remote_name
-    local remote_branch
+    local branch='?'
+    local remote_name='?'
+    local remote_branch='?'
 
     if [ ! -e .git ]; then
         status='not init'
@@ -156,22 +156,19 @@ check_remote_in_dir() {
                     | grep "^ *$branch *pushes" | sed 's/.*pushes to \(.*\) (.*)/\1/' | tr -d ' ')
             else
                 status=$remote_name
-                remote_name=
+                remote_name='?'
             fi
         else
             status=$branch
-            branch=
+            branch='?'
         fi
     fi
+
     if [ "$status" != "up to date" ]; then
         status="\033[0;31m$status\033[0;39m"
+        dir="\033[0;34m$dir\033[0;39m"
     fi
-    local branch_info=''
-    if [ -n "$branch" ]; then
-        branch_info="($branch -> $remote_name/$remote_branch)"
-    fi
-
-    local update_info="($status) [${dir%/}]$branch_info${url:+ URL: $url}"
+    local update_info="($status) [${dir%/}] ($branch -> $remote_name/$remote_branch) URL: $url"
 
     print_indent "$indent_level"
     echo -e "$update_info"
