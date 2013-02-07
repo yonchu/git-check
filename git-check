@@ -43,7 +43,7 @@ get_head_branch () {
     local head_branch=$(git symbolic-ref -q --short HEAD)
     if [ -z "$head_branch" ]; then
         local prehash=$(git rev-parse --short HEAD)
-        echo "Not on any branch : prehash=$prehash"
+        echo "$prehash"
         return 1
     fi
     echo "$head_branch"
@@ -54,7 +54,7 @@ get_remote_name () {
     # The remote name of this branch (e.g. origin).
     local remote_name=$(git config branch."${branch}".remote)
     if [ -z "$remote_name" ]; then
-        echo 'No remote repository'
+        echo 'no remote repository'
         return 1
     fi
     echo "$remote_name"
@@ -118,7 +118,7 @@ exec_cmd_in_dir() {
         is_dir "$dir" || continue
         (
             cd_git_toplevel "$dir" || continue
-           "$cmd" "$dir"
+            "$cmd" "$dir"
             exec_cmd_in_submodules "$cmd" "$(($indent_level + 1))"
         )
     done
@@ -140,11 +140,10 @@ check_remote_in_dir() {
     local dir=${1%/}
 
     local status
-    local url
-
     local branch
     local remote_name
     local merge_branch
+    local url
 
     if [ ! -e .git ]; then
         status='not init'
@@ -164,8 +163,7 @@ check_remote_in_dir() {
                 remote_name=
             fi
         else
-            status=$branch
-            branch=
+            status='not on any branch'
         fi
     fi
 
@@ -193,7 +191,12 @@ check_status_in_dir() {
         return 1
     fi
 
-    output=("[$dir] ($(get_head_branch))")
+    local head_branch
+    head_branch=$(get_head_branch)
+    if [ $? -ne 0 ]; then
+        head_branch="not on any branch: prehash=$head_branch"
+    fi
+    output=("[$dir] ($head_branch)")
     IFS=$'\n' output+=($(GIT_PAGER_IN_USE=true git status -s))
     for line in "${output[@]}"; do
         echo -e "$line"
@@ -209,7 +212,7 @@ main() {
     local opt_f
     local file
     local option
-    while getopts srf:w: option; do
+    while getopts srw:f: option; do
         case "$option" in
             s)
                 # Check git status.
@@ -219,14 +222,14 @@ main() {
                 # Check git remote.
                 opt_r='true'
                 ;;
+            w)
+                # Check indent width.
+                INDENT_WIDTH=$OPTARG
+                ;;
             f)
                 # Check repositories list file.
                 opt_f='true'
                 file=$OPTARG
-                ;;
-            w)
-                # Check indent width.
-                INDENT_WIDTH=$OPTARG
                 ;;
             :|\?)
                 exit_usage
