@@ -157,6 +157,25 @@ check_remote_in_dir() {
                 remote_show=$(git remote show "$remote_name")
                 status=$(echo "$remote_show" \
                     | grep "^ *$branch *pushes" | sed 's/.*(\(.*\)).*/\1/')
+                if [ -z "$status" ]; then
+                    local -a behind_ahead
+                    behind_ahead=($(command git rev-list --left-right --count "$remote_name/$merge_branch"...$branch))
+                    local behind=${behind_ahead[0]}
+                    local ahead=${behind_ahead[1]}
+                    if [ "$behind" -gt 0 ]; then
+                        status='local out of date'
+                    else
+                        local origin_head
+                        origin_head=$(git ls-remote origin HEAD | cut -f 1)
+                        if ! git rev-parse -q "$origin_head" > /dev/null 2>&1; then
+                            status='local out of date'
+                        elif [ "$ahead" -gt 0 ]; then
+                            status='fast-forwardable'
+                        else
+                            status='up to date'
+                        fi
+                    fi
+                fi
                 url=$(echo "$remote_show" | grep '^ *Push' | sed 's/^.*URL: \(.*\)$/\1/')
             else
                 status=$remote_name
