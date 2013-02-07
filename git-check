@@ -125,8 +125,6 @@ is_dir() {
     fi
     return 0
 }
-
-
 ### For check_remote_in_dir.
 # $1 : The directory path.
 # $2 : Indent level.
@@ -135,11 +133,11 @@ check_remote_in_dir() {
     local indent_level=${2:-0}
 
     local status
-    local url='?'
+    local url
 
-    local branch='?'
-    local remote_name='?'
-    local remote_branch='?'
+    local branch
+    local remote_name
+    local merge_branch
 
     if [ ! -e .git ]; then
         status='not init'
@@ -148,27 +146,28 @@ check_remote_in_dir() {
         if [ $? -eq 0 ]; then
             remote_name=$(get_remote_name "$branch")
             if [ $? -eq 0 ]; then
-                local remote_show=$(git remote show "$remote_name")
+                merge_branch=$(git config branch."${branch}".merge | sed 's%^refs/heads/%%')
+                local remote_show
+                remote_show=$(git remote show "$remote_name")
                 status=$(echo "$remote_show" \
                     | grep "^ *$branch *pushes" | sed 's/.*(\(.*\)).*/\1/')
                 url=$(echo "$remote_show" | grep '^ *Push' | sed 's/^.*URL: \(.*\)$/\1/')
-                remote_branch=$(echo "$remote_show" \
-                    | grep "^ *$branch *pushes" | sed 's/.*pushes to \(.*\) (.*)/\1/' | tr -d ' ')
             else
                 status=$remote_name
-                remote_name='?'
+                remote_name=
             fi
         else
             status=$branch
-            branch='?'
+            branch=
         fi
     fi
 
+    status=${status:-'?'}
     if [ "$status" != "up to date" ]; then
-        status="\033[0;31m$status\033[0;39m"
-        dir="\033[0;34m$dir\033[0;39m"
+        status="\033[0;31m${status}\033[0;39m"
+        dir="\033[0;34m${dir}\033[0;39m"
     fi
-    local update_info="($status) [${dir%/}] ($branch -> $remote_name/$remote_branch) URL: $url"
+    local update_info="($status) [${dir:-?}] (${branch:-?} -> ${remote_name:-?}/${merge_branch:-?}) URL: ${url:-?}"
 
     print_indent "$indent_level"
     echo -e "$update_info"
