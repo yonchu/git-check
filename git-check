@@ -193,11 +193,8 @@ check_status_in_dir() {
         return 1
     fi
 
-    output+=("[$dir] ($(get_head_branch))")
-    status=$(git status -s)
-    if [ -n "$status" ]; then
-        IFS=$'\n' output+=($(echo "$status" | sed  's/^\(.\{2\}\)\(.*\)/\\033[0;31m\1\\033[0;39m\2/g'))
-    fi
+    output=("[$dir] ($(get_head_branch))")
+    IFS=$'\n' output+=($(GIT_PAGER_IN_USE=true git status -s))
     for line in "${output[@]}"; do
         echo -e "$line"
     done
