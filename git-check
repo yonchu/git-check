@@ -158,10 +158,10 @@ check_remote_in_dir() {
                 status=$(echo "$remote_show" \
                     | grep "^ *$branch *pushes" | sed 's/.*(\(.*\)).*/\1/')
                 if [ -z "$status" ]; then
-                    local -a behind_ahead
-                    behind_ahead=($(command git rev-list --left-right --count "$remote_name/$merge_branch"...$branch))
-                    local behind=${behind_ahead[0]}
-                    local ahead=${behind_ahead[1]}
+                    local behind_ahead
+                    behind_ahead=$(git rev-list --left-right --count "$remote_name/$merge_branch"...$branch)
+                    local behind=$(echo "$behind_ahead" | awk '{print $1}')
+                    local ahead=$(echo "$behind_ahead" | awk '{print $2}')
                     if [ "$behind" -gt 0 ]; then
                         status='local out of date'
                     else
