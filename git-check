@@ -69,7 +69,7 @@ is_git_dir() {
 # $1 : The directory path.
 cd_git_toplevel() {
     cd "$1"
-    is_git_dir 2> /dev/null || return 1
+    is_git_dir || return 1
     cd "$(git rev-parse --show-toplevel)"
 }
 # $1 : Indent level.
@@ -117,7 +117,11 @@ exec_cmd_in_dir() {
     for dir in "$@"; do
         is_dir "$dir" || continue
         (
-            cd_git_toplevel "$dir" || continue
+            cd "$dir"
+            is_git_dir 2> /dev/null || continue
+            if [ "$(pwd -P)" != "$(git rev-parse --show-toplevel)" ]; then
+                continue
+            fi
             "$cmd" "$dir"
             exec_cmd_in_submodules "$cmd" "$(($indent_level + 1))"
         )
@@ -303,7 +307,7 @@ main() {
     else
         if [ $# -eq 0 ]; then
             # Check current directory.
-            is_git_dir || return 1
+            cd_git_toplevel '.' || return 1
             set '.'
         fi
     fi
