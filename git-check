@@ -86,11 +86,12 @@ print_indent() {
 # $1 : The executing command.
 # $2 : Indent level.
 exec_cmd_in_submodules() {
-    local cmd=$1
-    local indent_level=${2:-1}
-    local output
+    local cmd="$1" indent_level="${2:-1}" output IFS_SAVE
     local -a submodule_dirs
-    IFS=$'\n' submodule_dirs=($(git submodule 2> /dev/null | sed 's/^ *//g' | cut -d ' ' -f 2 | sed 's/(.*)$//'))
+    IFS_SAVE=$IFS
+    IFS=$'\n'
+    submodule_dirs=($(git submodule 2> /dev/null | sed 's/^ *//g' | cut -d ' ' -f 2 | sed 's/(.*)$//'))
+    IFS=$IFS_SAVE
     if [ -z "$submodule_dirs" ]; then
         return 0
     fi
@@ -98,7 +99,10 @@ exec_cmd_in_submodules() {
         (
             cd "$sub_dir" || continue
 
-            IFS=$'\n' output=($("$cmd" "$sub_dir"))
+            IFS_SAVE=$IFS
+            IFS=$'\n'
+            output=($("$cmd" "$sub_dir"))
+            IFS=$IFS_SAVE
             for line in "${output[@]}"; do
                 print_indent "$indent_level"
                 echo -e "$line"
@@ -205,8 +209,7 @@ check_remote_in_dir() {
 # $1 : The directory path.
 # $2 : Indent level.
 check_status_in_dir() {
-    local dir=$1
-    local indent_level=${2:-0}
+    local dir="$1" indent_level="${2:-0}" IFS_SAVE
     local -a output
 
     if [ ! -e .git ]; then
@@ -220,7 +223,10 @@ check_status_in_dir() {
         head_branch="not on any branch: prehash=$head_branch"
     fi
     output=("[$dir] ($head_branch)")
-    IFS=$'\n' output+=($(GIT_PAGER_IN_USE=true git status -s))
+    IFS_SAVE=$IFS
+    IFS=$'\n'
+    output+=($(GIT_PAGER_IN_USE=true git status -s))
+    IFS=$IFS_SAVE
     for line in "${output[@]}"; do
         echo -e "$line"
     done
@@ -230,11 +236,7 @@ check_status_in_dir() {
 ### Main ###
 main() {
     ## Parse options.
-    local opt_s
-    local opt_r
-    local opt_f
-    local file
-    local option
+    local opt_s opt_r opt_f file option IFS_SAVE
     while getopts srw:f: option; do
         case "$option" in
             s)
@@ -267,7 +269,10 @@ main() {
         echo "Read file \"${file}\"..."
         echo '--------- ---------- ----------'
         local -a lines
-        IFS=$'\n' lines=($(cat "${file}"))
+        IFS_SAVE=$IFS
+        IFS=$'\n'
+        lines=($(cat "${file}"))
+        IFS=$IFS_SAVE
 
         local line
 
